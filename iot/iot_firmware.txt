@@ -1,0 +1,107 @@
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <WiFiClientSecure.h>
+
+/* ===============================
+   MULTIPLE WIFI OPTIONS
+================================ */
+const char* ssids[] = {
+  "YOUR_WIFI_1",
+  "YOUR_WIFI_2"
+};
+const char* passwords[] = {
+  "YOUR_PASSWORD_1",
+  "YOUR_PASSWORD_2"
+};
+
+const int WIFI_COUNT = 2;
+
+/* ===============================
+   SERVER DETAILS (HOSTED)
+================================ */
+const char* SERVER_URL =
+  "https://your-domain/admin/update_bin.php";
+
+const char* BIN_ID = "BIN001";
+
+/* ===============================
+   ULTRASONIC SENSOR PINS
+================================ */
+#define TRIG_PIN 5
+#define ECHO_PIN 18
+
+float measureDistance() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+  if (duration == 0) return -1;
+
+  float distance = duration * 0.034 / 2;
+  return distance;
+}
+
+void connectToWiFi() {
+  WiFi.mode(WIFI_STA);
+
+  for (int i = 0; i < WIFI_COUNT; i++) {
+    WiFi.begin(ssids[i], passwords[i]);
+
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+      delay(500);
+      attempts++;
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+      return;
+    }
+  }
+}
+
+void sendToServer(float distance) {
+  WiFiClientSecure client;
+  client.setInsecure();
+
+  HTTPClient http;
+
+  String url = String(SERVER_URL) +
+               "?bin_id=" + BIN_ID +
+               "&distance=" + String(distance, 1);
+
+  http.begin(client, url);
+  http.addHeader("User-Agent", "ESP8266");
+
+  http.GET();
+  http.end();
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  connectToWiFi();
+}
+
+void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    connectToWiFi();
+    delay(3000);
+    return;
+  }
+
+  float distance = measureDistance();
+  if (distance < 0) {
+    delay(2000);
+    return;
+  }
+
+  sendToServer(distance);
+  delay(5000);
+}

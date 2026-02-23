@@ -163,7 +163,7 @@ and guidance during the development of this project:
   LinkedIn: [Mohd_Affan](https://www.linkedin.com/in/mohammed-affan-79648934a/)
   
 
-- **Rahul (WhatsApp Integration Support)**
+- **Rahul (WhatsApp Integration Support)**<br>
   GitHub: [@rahul](https://github.com/Rahhul69)    
   LinkedIn: [Rahul](https://www.linkedin.com/in/rahul-achari-255a71319/)
 
